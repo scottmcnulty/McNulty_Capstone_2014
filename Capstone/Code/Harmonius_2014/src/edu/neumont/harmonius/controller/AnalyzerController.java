@@ -65,87 +65,10 @@ public class AnalyzerController {
 				return;
 			try {
 
-				/*
-				 * JAVA SOUND.SAMPLED.MIXER documentation: The Mixer interface
-				 * represents a mixer which as we have seen
-				 * represents either a hardware or a software device. The Mixer
-				 * interface provides methods for obtaining a mixer's lines.
-				 * These include source lines, which feed audio to the mixer,
-				 * and target lines, to which the mixer delivers its mixed
-				 * audio. For an audio-input mixer, the source lines are input
-				 * ports such as the microphone input, and the target lines are
-				 * TargetDataLines (described below), which deliver audio to the
-				 * application program. For an audio-output mixer, on the other
-				 * hand, the source lines are Clips or SourceDataLines
-				 * (described below), to which the application program feeds
-				 * audio data, and the target lines are output ports such as the
-				 * speaker. A Mixer is defined as having one or more source
-				 * lines and one or more target lines. Note that this definition
-				 * means that a mixer need not actually mix data; it might have
-				 * only a single source line. The Mixer API is intended to
-				 * encompass a variety of devices, but the typical case supports
-				 * mixing. The Mixer interface supports synchronization; that
-				 * is, you can specify that two or more of a mixer's lines be
-				 * treated as a synchronized group. Then you can start, stop, or
-				 * close all those data lines by sending a single message to any
-				 * line in the group, instead of having to control each line
-				 * individually. With a mixer that supports this feature, you
-				 * can obtain sample-accurate synchronization between lines.
-				 */
 				Mixer mixer = AudioSystem.getMixer(selected);
 
 				AudioFormat format = new AudioFormat(sampleRate, 16, 1, true,
 						false);
-
-				/*
-				 * JAVA SOUND.SAMPLED.LINE documentation:
-				 * 
-				 * The generic Line interface does not provide a means to start
-				 * and stop playback or recording. For that you need a data
-				 * line. The DataLine interface supplies the following
-				 * additional media-related features beyond those of a Line:
-				 * 
-				 * Audio format – Each data line has an audio format associated
-				 * with its data stream. Media position – A data line can report
-				 * its current position in the media, expressed in sample
-				 * frames. This represents the number of sample frames captured
-				 * by or rendered from the data line since it was opened. Buffer
-				 * size – This is the size of the data line's internal buffer in
-				 * bytes. For a source data line, the internal buffer is one to
-				 * which data can be written, and for a target data line it's
-				 * one from which data can be read. Level (the current amplitude
-				 * of the audio signal) Start and stop playback or capture Pause
-				 * and resume playback or capture Flush (discard unprocessed
-				 * data from the queue) Drain (block until all unprocessed data
-				 * has been drained from the queue, and the data line's buffer
-				 * has become empty) Active status – A data line is considered
-				 * active if it is engaged in active presentation or capture of
-				 * audio data to or from a mixer. Events – START and STOP events
-				 * are produced when active presentation or capture of data from
-				 * or to the data line starts or stops.
-				 * 
-				 * A TargetDataLine receives audio data from a mixer. Commonly,
-				 * the mixer has captured audio data from a port such as a
-				 * microphone; it might process or mix this captured audio
-				 * before placing the data in the target data line's buffer. The
-				 * TargetDataLine interface provides methods for reading the
-				 * data from the target data line's buffer and for determining
-				 * how much data is currently available for reading.
-				 * 
-				 * A SourceDataLine receives audio data for playback. It
-				 * provides methods for writing data to the source data line's
-				 * buffer for playback, and for determining how much data the
-				 * line is prepared to receive without blocking.
-				 * 
-				 * A Clip is a data line into which audio data can be loaded
-				 * prior to playback. Because the data is pre-loaded rather than
-				 * streamed, the clip's duration is known before playback, and
-				 * you can choose any starting position in the media. Clips can
-				 * be looped, meaning that upon playback, all the data between
-				 * two specified loop points will repeat a specified number of
-				 * times, or indefinitely.
-				 */
-				
 				
 				DataLine.Info dataLineInfo = new DataLine.Info(
 						TargetDataLine.class, format);
@@ -281,7 +204,7 @@ public class AnalyzerController {
 		} else {
 			Yin.stop();
 			double returnable = averagePitch;
-			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
+			//for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
 			averagePitch = 0.0;
 			return returnable;
 		}
