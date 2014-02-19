@@ -1,5 +1,6 @@
 package edu.neumont.harmonius.controller;
 
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JTextArea;
 
 import edu.neumont.harmonius.note.Note;
 import edu.neumont.harmonius.note.WesternScale;
@@ -26,10 +28,10 @@ public class AnalyzerController {
 	public AnalyzerController() {
 
 	}
-	
 	// volatile because it runs on its own thread - volatile guarantees the most updated value
 	volatile AudioInputProcessor aiprocessor;
 
+	// for processing files of notes
 	String fileName = null;
 
 	// can replace with other tonal scales with their notes and pitch values
@@ -39,22 +41,14 @@ public class AnalyzerController {
 	
 	
 	private double[] pitchHistoryTotal = new double[6000];
-	private double averagePitch;
+	public double averagePitch = 0;
 	int pitchCounter = 0;
 
 	public void setInputDevice(javax.sound.sampled.Mixer.Info target) {
 		this.target = target;
 
 	}
-	
-	/* Tight coupling, will be decoupled with model implementation
-	 * 
-	 */
-	ApplicationView view; 
-	
-	public void getView(ApplicationView view){
-		this.view = view;
-	}
+
 	
 	class AudioInputProcessor implements Runnable {
 
@@ -109,7 +103,7 @@ public class AnalyzerController {
 
 		}
 
-		public double processAudio(AudioFloatInputStream afis)
+		public void processAudio(AudioFloatInputStream afis)
 				throws IOException, UnsupportedAudioFileException {
 
 			Yin.processStream(afis, new DetectedPitchHandler() {
@@ -142,10 +136,10 @@ public class AnalyzerController {
 
 			double pitchAccum = 1.0;
 			int pitchCount = 1;
-			averagePitch = 0;
+			
 			for (int i = 0; i < pitchHistoryTotal.length; i++) {
 
-				System.out.println(pitchHistoryTotal[i] + "\t");
+				//System.out.println(pitchHistoryTotal[i] + "\t");
 
 				if (pitchHistoryTotal[i] > 0) { // filter out zeros and -1 (no signal)
 
@@ -159,8 +153,7 @@ public class AnalyzerController {
 				averagePitch = pitchAccum / pitchCount;
 			}
 			System.out.println("\n Average pitch = " + averagePitch);
-			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
-			return averagePitch;
+			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}	
 		}
 	}
 
@@ -192,7 +185,7 @@ public class AnalyzerController {
 		} else {
 			Yin.stop();
 			double returnable = averagePitch;
-			averagePitch = 0.0;
+			//averagePitch = 0.0;
 			return returnable;
 		}
 	}
@@ -202,14 +195,38 @@ public class AnalyzerController {
 			return;
 		} else {
 			Yin.stop();
+			System.out.println("after yinstop" + averagePitch);
 			double returnable = averagePitch;
-			averagePitch = 0.0;
 			
-			//process info
+			double score = 0;
+			double currFreq = 0;
+			for(Note n: notes){
+				
+				// go over the frequency
+				if(n.getFrequency() > returnable){
+					System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
+					//find out if its closer to freq above or below
+					if((returnable - currFreq) > (n.getFrequency() - returnable)){
+						System.out.println("got to upper"  + returnable + " " + n.getFrequency());
+						score = n.getFrequency() - returnable;
+						break;
+					}
+					else{
+						System.out.println("got to lower" + returnable + " " + currFreq);
+						score = returnable - currFreq;
+						break;
+					}
+				}
+				currFreq = n.getFrequency();
+			}
+			System.out.println("SCORE " + score );
 			
-			//change field
-			
-			
+			Component[] comps = view.getComponents();
+			for(Component c : comps){
+				if(c.getName() == "jp2ResultsJTextArea"){
+					((JTextArea) c).setText("You were " + score + "Hz off of the your intended pitch.");
+				}
+			}
 		}
 	}
 	
@@ -218,29 +235,27 @@ public class AnalyzerController {
 			return;
 		} else {
 			Yin.stop();
-			double returnable = averagePitch;
-			averagePitch = 0.0;
-			//process info
+			//double returnable = averagePitch;
+			//averagePitch = 0.0;
 			
-			//change field	
+			Component[] comps = view.getComponents();
+		
 		}
+	}
+	
+	/* Tight coupling, will be decoupled with model implementation
+	 * TO-FIX
+	 */
+	public ApplicationView view; 
+	
+	public void getView(ApplicationView v){
+		view = v;
 	}
 	
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		
 	
 	
 	

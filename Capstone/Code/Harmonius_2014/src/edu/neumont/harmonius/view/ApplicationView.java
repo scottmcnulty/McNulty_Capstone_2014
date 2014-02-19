@@ -39,7 +39,7 @@ public class ApplicationView extends JFrame {
 		setSize(1024,768);  //find out projector size
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(3);
-		analyzer.getView(this);
+		
 
 		ArrayList<javax.sound.sampled.Mixer.Info> capMixers = new ArrayList<javax.sound.sampled.Mixer.Info>();
 		javax.sound.sampled.Mixer.Info mixers[] = AudioSystem.getMixerInfo();
@@ -152,7 +152,7 @@ public class ApplicationView extends JFrame {
 		JButton stopbutton_jp2 = new JButton("Stop Recording and Submit");
 		stopbutton_jp2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String warmUpResult = Double.toString(analyzer.stopAction());
+				analyzer.warmUpStopAction();
 			}
 		});
 		
@@ -391,6 +391,8 @@ public class ApplicationView extends JFrame {
 
 		getContentPane().add(jtp);
 		setVisible(true); 
+		
+		analyzer.getView(this);	
 	      
 	}
 	
