@@ -14,8 +14,7 @@ public class Driver {
 	
     ApplicationView view = new ApplicationView(analyzer);
     
-    //Model model = new Model(analyzer);
-    
+    //Model model = new Model();
     
 	public static void main(String args[]){
 		new Driver();

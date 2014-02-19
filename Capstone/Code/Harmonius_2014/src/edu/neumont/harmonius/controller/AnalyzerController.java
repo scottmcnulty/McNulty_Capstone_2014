@@ -17,6 +17,7 @@ import edu.neumont.harmonius.note.WesternScale;
 import edu.neumont.harmonius.vendor.AudioFloatInputStream;
 import edu.neumont.harmonius.vendor.Yin;
 import edu.neumont.harmonius.vendor.Yin.DetectedPitchHandler;
+import edu.neumont.harmonius.view.ApplicationView;
 
 public class AnalyzerController {
 
@@ -25,9 +26,6 @@ public class AnalyzerController {
 	public AnalyzerController() {
 
 	}
-
-	private static final long serialVersionUID = 1L;
-
 	
 	// volatile because it runs on its own thread - volatile guarantees the most updated value
 	volatile AudioInputProcessor aiprocessor;
@@ -39,7 +37,7 @@ public class AnalyzerController {
 	
 	ArrayList<Note> notes = ws.getNotes();
 	
-	//
+	
 	private double[] pitchHistoryTotal = new double[6000];
 	private double averagePitch;
 	int pitchCounter = 0;
@@ -48,7 +46,16 @@ public class AnalyzerController {
 		this.target = target;
 
 	}
-
+	
+	/* Tight coupling, will be decoupled with model implementation
+	 * 
+	 */
+	ApplicationView view; 
+	
+	public void getView(ApplicationView view){
+		this.view = view;
+	}
+	
 	class AudioInputProcessor implements Runnable {
 
 		private final int sampleRate;
@@ -64,31 +71,21 @@ public class AnalyzerController {
 			if (selected == null)
 				return;
 			try {
-
 				Mixer mixer = AudioSystem.getMixer(selected);
-
-				AudioFormat format = new AudioFormat(sampleRate, 16, 1, true,
-						false);
-				
-				DataLine.Info dataLineInfo = new DataLine.Info(
-						TargetDataLine.class, format);
+				AudioFormat format = new AudioFormat(sampleRate, 16, 1, true,false);
+				DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, format);
 				/*Besides the class information inherited from its superclass, DataLine.Info provides additional information 
 				 * specific to data lines. This information includes
 				 *  -the audio formats supported by the data line
 				 *  -and the minimum and maximum sizes of its internal buffer
 				 */
-				
-				
-				TargetDataLine line = (TargetDataLine) mixer
-						.getLine(dataLineInfo);
+				TargetDataLine line = (TargetDataLine) mixer.getLine(dataLineInfo);
 				/*A target data line is a type of DataLine from which audio data can be read. The most common example is a data line that gets its 
 				 * data from an audio capture device. (The device is implemented as a mixer that writes to the target data line.)
 				 *Note that the naming convention for this interface reflects the relationship between the line and its mixer. From the perspective
 				 * of an application, a target data line may act as a source for audio data.
 				 * The target data line can be obtained from a mixer by invoking the getLine method of Mixer with an appropriate DataLine.Info object.
 				 */
-			
-				
 				int numberOfSamples = (int) (audioBufferSize * sampleRate);
 
 				line.open(format, numberOfSamples);
@@ -100,8 +97,7 @@ public class AnalyzerController {
 					ais = AudioSystem.getAudioInputStream(new File(fileName));
 
 				}
-				AudioFloatInputStream afis = AudioFloatInputStream
-						.getInputStream(ais);
+				AudioFloatInputStream afis = AudioFloatInputStream.getInputStream(ais);
 				processAudio(afis);
 				line.close();
 			} catch (Exception e) {
@@ -113,24 +109,18 @@ public class AnalyzerController {
 
 		}
 
-		public void processAudio(AudioFloatInputStream afis)
+		public double processAudio(AudioFloatInputStream afis)
 				throws IOException, UnsupportedAudioFileException {
 
 			Yin.processStream(afis, new DetectedPitchHandler() {
 
-				double[] pitchHistory = new double[6000]; // 600 is default
-				// value to get a
-				// pretty good
-				// visual line of
-				// pitch
+				double[] pitchHistory = new double[6000]; // 600 is default value to get a pretty good visual line of pitch
 				int pitchHistoryPos = 0;
 
 				@Override
 				public void handleDetectedPitch(float time, float pitch) {
 
-				
 					boolean noteDetected = pitch != -1;
-
 					double detectedNote = 69D + (12D * Math.log(pitch / 440D))
 							/ Math.log(2D);
 					// noteDetected = noteDetected && Math.abs(detectedNote - Math.round(detectedNote)) > 0.3;
@@ -145,21 +135,18 @@ public class AnalyzerController {
 					pitchHistory[pitchHistoryPos] = noteDetected ? detectedNote
 							: 0.0;
 
-					int jj = pitchHistoryPos;
-					
+					//int jj = pitchHistoryPos;
 					pitchHistoryPos++;
-					
 				}
-
 			});
 
 			double pitchAccum = 1.0;
 			int pitchCount = 1;
 			averagePitch = 0;
 			for (int i = 0; i < pitchHistoryTotal.length; i++) {
-				
+
 				System.out.println(pitchHistoryTotal[i] + "\t");
-				
+
 				if (pitchHistoryTotal[i] > 0) { // filter out zeros and -1 (no signal)
 
 					// filter to get rid of overtones
@@ -172,7 +159,8 @@ public class AnalyzerController {
 				averagePitch = pitchAccum / pitchCount;
 			}
 			System.out.println("\n Average pitch = " + averagePitch);
-			
+			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
+			return averagePitch;
 		}
 	}
 
@@ -204,9 +192,57 @@ public class AnalyzerController {
 		} else {
 			Yin.stop();
 			double returnable = averagePitch;
-			//for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
 			averagePitch = 0.0;
 			return returnable;
 		}
 	}
+	
+	public void warmUpStopAction(){
+		if (aiprocessor == null) {
+			return;
+		} else {
+			Yin.stop();
+			double returnable = averagePitch;
+			averagePitch = 0.0;
+			
+			//process info
+			
+			//change field
+			
+			
+		}
+	}
+	
+	public void intervalTrainingStopAction(){
+		if (aiprocessor == null) {
+			return;
+		} else {
+			Yin.stop();
+			double returnable = averagePitch;
+			averagePitch = 0.0;
+			//process info
+			
+			//change field	
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

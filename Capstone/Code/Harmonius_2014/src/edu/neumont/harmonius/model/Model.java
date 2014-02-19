@@ -8,7 +8,7 @@ import edu.neumont.harmonius.controller.AnalyzerController;
 
 public class Model {
 
-	public Model(AnalyzerController analyzer) {
-
+	public Model() {
+		
 	}
 }
