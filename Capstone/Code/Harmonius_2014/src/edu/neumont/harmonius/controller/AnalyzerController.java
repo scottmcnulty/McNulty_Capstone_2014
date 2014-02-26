@@ -1,19 +1,20 @@
 package edu.neumont.harmonius.controller;
 
-import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JTextArea;
 
+import edu.neumont.harmonius.model.Model;
 import edu.neumont.harmonius.note.Note;
 import edu.neumont.harmonius.note.WesternScale;
 import edu.neumont.harmonius.vendor.AudioFloatInputStream;
@@ -22,12 +23,9 @@ import edu.neumont.harmonius.vendor.Yin.DetectedPitchHandler;
 import edu.neumont.harmonius.view.ApplicationView;
 
 public class AnalyzerController {
-
+	
 	javax.sound.sampled.Mixer.Info target;
-
-	public AnalyzerController() {
-
-	}
+	
 	// volatile because it runs on its own thread - volatile guarantees the most updated value
 	volatile AudioInputProcessor aiprocessor;
 
@@ -40,8 +38,10 @@ public class AnalyzerController {
 	ArrayList<Note> notes = ws.getNotes();
 	
 	
+	Random gen = new Random();
+	Note currentNote;
 	private double[] pitchHistoryTotal = new double[6000];
-	public double averagePitch = 0;
+    double averagePitch;
 	int pitchCounter = 0;
 
 	public void setInputDevice(javax.sound.sampled.Mixer.Info target) {
@@ -134,7 +134,7 @@ public class AnalyzerController {
 				}
 			});
 
-			double pitchAccum = 1.0;
+			double pitchAccum = 1;
 			int pitchCount = 1;
 			
 			for (int i = 0; i < pitchHistoryTotal.length; i++) {
@@ -144,7 +144,7 @@ public class AnalyzerController {
 				if (pitchHistoryTotal[i] > 0) { // filter out zeros and -1 (no signal)
 
 					// filter to get rid of overtones
-					if (Math.abs(averagePitch - pitchHistoryTotal[i]) < 300) { // tighten up
+					if (Math.abs(averagePitch - pitchHistoryTotal[i]) < 600) { // tighten up
 
 						pitchAccum += pitchHistoryTotal[i];
 						pitchCount++;
@@ -153,7 +153,10 @@ public class AnalyzerController {
 				averagePitch = pitchAccum / pitchCount;
 			}
 			System.out.println("\n Average pitch = " + averagePitch);
-			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}	
+			
+			//clear it
+			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
+			
 		}
 	}
 
@@ -179,23 +182,18 @@ public class AnalyzerController {
 		}
 	}
 
-	public double stopAction() {
-		if (aiprocessor == null) {
-			return 0;
-		} else {
-			Yin.stop();
-			double returnable = averagePitch;
-			//averagePitch = 0.0;
-			return returnable;
-		}
-	}
-	
-	public void warmUpStopAction(){
+	public void stopAction() {
 		if (aiprocessor == null) {
 			return;
 		} else {
 			Yin.stop();
-			System.out.println("after yinstop" + averagePitch);
+			return;
+		}
+	}
+	
+	public void warmUpResultAction(){
+			
+			System.out.println("method call " + averagePitch );
 			double returnable = averagePitch;
 			
 			double score = 0;
@@ -209,11 +207,13 @@ public class AnalyzerController {
 					if((returnable - currFreq) > (n.getFrequency() - returnable)){
 						System.out.println("got to upper"  + returnable + " " + n.getFrequency());
 						score = n.getFrequency() - returnable;
+						view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
 						break;
 					}
 					else{
 						System.out.println("got to lower" + returnable + " " + currFreq);
 						score = returnable - currFreq;
+						view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
 						break;
 					}
 				}
@@ -221,26 +221,77 @@ public class AnalyzerController {
 			}
 			System.out.println("SCORE " + score );
 			
-			Component[] comps = view.getComponents();
-			for(Component c : comps){
-				if(c.getName() == "jp2ResultsJTextArea"){
-					((JTextArea) c).setText("You were " + score + "Hz off of the your intended pitch.");
-				}
-			}
+			view.setjp2ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
+				averagePitch = 1;
+
+	}
+	
+	
+	public void playNote() {
+		String range = view.getJjp3JComboBoxSelected();
+		System.out.println(range);
+		
+		switch(range){
+		
+		case "Soprano":
+			
+			break;
+		case "Alto":
+			
+			break;
+		case "Tenor":
+			String soundName = "eb3hhard.wav";    
+			try{
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+			Clip clip = AudioSystem.getClip();
+			clip.open(audioInputStream);
+			clip.start();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	
+			
+			break;
+		case "Bass":
+			
+			break;
+			
 		}
+		
 	}
 	
 	public void intervalTrainingStopAction(){
-		if (aiprocessor == null) {
-			return;
-		} else {
-			Yin.stop();
-			//double returnable = averagePitch;
-			//averagePitch = 0.0;
-			
-			Component[] comps = view.getComponents();
+		System.out.println("method call " + averagePitch );
+		double returnable = averagePitch;
 		
+		double score = 0;
+		double currFreq = 0;
+		for(Note n: notes){
+			
+			// go over the frequency
+			if(n.getFrequency() > returnable){
+				System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
+				//find out if its closer to freq above or below
+				if((returnable - currFreq) > (n.getFrequency() - returnable)){
+					System.out.println("got to upper"  + returnable + " " + n.getFrequency());
+					score = n.getFrequency() - returnable;
+					view.setjp3ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
+					break;
+				}
+				else{
+					System.out.println("got to lower" + returnable + " " + currFreq);
+					score = returnable - currFreq;
+					view.setjp3ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
+					break;
+				}
+			}
+			currFreq = n.getFrequency();
 		}
+		System.out.println("SCORE " + score );
+		
+		//view.setjp3ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
+			averagePitch = 1;
+
 	}
 	
 	/* Tight coupling, will be decoupled with model implementation
@@ -252,12 +303,7 @@ public class AnalyzerController {
 		view = v;
 	}
 	
-	
-	
-	
-		
-	
-	
-	
-	
+	public AnalyzerController(Model model) {
+
+	}
 }

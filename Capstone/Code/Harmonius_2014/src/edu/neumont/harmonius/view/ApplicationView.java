@@ -31,9 +31,34 @@ import edu.neumont.harmonius.controller.AnalyzerController;
 public class ApplicationView extends JFrame {
 
 	Border raisedetched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
-
+	JTabbedPane jtp;
+	
+	HandyJPanel jp1;
+	JLabel jp1Label;
+	JLabel labelx;
+	@SuppressWarnings("rawtypes")
+	JComboBox mixer_selector;
+	
+	HandyJPanel jp2;
+	JLabel jp2Label;
+	JTextArea jp2ResultsJTextArea;
+	JLabel jp2InstructionsLabel;
+	JLabel jp2ResultsLabel;
+	JPanel jp2WestButtonPanel;
+	JButton startbutton_jp2, stopbutton_jp2;
+	
+	HandyJPanel jp3;
+	JLabel jp3Label;
+	JTextArea jp3ResultsJTextArea;
+	JLabel jp3InstructionsLabel;
+	JLabel jp3ResultsLabel;
+	JPanel jp3WestButtonPanel;
+	JButton startbutton_jp3, stopbutton_jp3;
+	JComboBox<String> jp3RangeJComboBox;
+	JButton jp3PlayNoteButton;
+	
+	
 	public ApplicationView(final AnalyzerController analyzer){
-
 
 		setTitle("Harmonius"); 
 		setSize(1024,768);  //find out projector size
@@ -44,7 +69,7 @@ public class ApplicationView extends JFrame {
 		ArrayList<javax.sound.sampled.Mixer.Info> capMixers = new ArrayList<javax.sound.sampled.Mixer.Info>();
 		javax.sound.sampled.Mixer.Info mixers[] = AudioSystem.getMixerInfo();
 
-		JTabbedPane jtp = new JTabbedPane();
+		jtp = new JTabbedPane();
 
 		/*Load images
 		 * 
@@ -62,9 +87,9 @@ public class ApplicationView extends JFrame {
 		/***********
 		 * create GUI for jp1 (JPanel One)
 		 ***********/
-		HandyJPanel jp1 = new HandyJPanel(musicalNotes, 0, 0, 1024, 768);
+		jp1 = new HandyJPanel(musicalNotes, 0, 0, 1024, 768);
 		jp1.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 80));
-		JLabel jp1Label = new JLabel();
+		jp1Label = new JLabel();
 		jp1Label.setText("Harmonious");
 		jp1Label.setBorder(raisedetched);
 		jp1Label.setFont(new Font("Courier New", Font.BOLD, 80));
@@ -75,7 +100,7 @@ public class ApplicationView extends JFrame {
 		jp1Label.setOpaque(true);
 		jp1.add(jp1Label);
 		
-		JLabel labelx = new JLabel();
+		labelx = new JLabel();
 		labelx.setText("Please select an input device to use with this session:");
 		labelx.setBorder(raisedetched);
 		labelx.setFont(new Font("Courier New", Font.ITALIC, 12));
@@ -93,7 +118,7 @@ public class ApplicationView extends JFrame {
 			if (AudioSystem.getMixer(mixerinfo).getTargetLineInfo().length != 0)
 				capMixers.add(mixerinfo);
 		}
-		JComboBox mixer_selector = new JComboBox(capMixers.toArray());
+		mixer_selector = new JComboBox(capMixers.toArray());
 
 		//main.add(mixer_selector);
 		jp1.add(mixer_selector);
@@ -105,15 +130,15 @@ public class ApplicationView extends JFrame {
 		/***********
 		 * create GUI for jp2 (JPanel Two)
 		 ***********/
-		HandyJPanel jp2 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
+		jp2 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
 		jp2.setLayout(new BorderLayout(20,20));
-		JLabel jp2Label = new JLabel();
+		jp2Label = new JLabel();
 		jp2Label.setText("Pitch Warm Up Training");
 		
 		//JTextArea jp2InstructionsJTextArea  = new javax.swing.JTextArea();
-		JTextArea jp2ResultsJTextArea = new javax.swing.JTextArea();
-		JLabel jp2InstructionsLabel = new javax.swing.JLabel();
-		JLabel jp2ResultsLabel = new javax.swing.JLabel();
+		jp2ResultsJTextArea = new javax.swing.JTextArea();
+		jp2InstructionsLabel = new javax.swing.JLabel();
+		jp2ResultsLabel = new javax.swing.JLabel();
 
 		//jp2InstructionsJTextArea.setColumns(20);
 		//jp2InstructionsJTextArea.setRows(5);
@@ -139,8 +164,8 @@ public class ApplicationView extends JFrame {
 		//jp2.add(jp2InstructionsJTextArea, BorderLayout.CENTER);
 
 		//buttons for jp2
-		JPanel jp2WestButtonPanel = new JPanel();
-		JButton startbutton_jp2 = new JButton("Start Recording");
+		jp2WestButtonPanel = new JPanel();
+		startbutton_jp2 = new JButton("Start Recording");
 		startbutton_jp2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {	
 				analyzer.startAction();
@@ -149,10 +174,17 @@ public class ApplicationView extends JFrame {
 		jp2WestButtonPanel.add(startbutton_jp2);
 
 
-		JButton stopbutton_jp2 = new JButton("Stop Recording and Submit");
+		stopbutton_jp2 = new JButton("Stop Recording and Submit");
 		stopbutton_jp2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				analyzer.warmUpStopAction();
+				analyzer.stopAction();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				analyzer.warmUpResultAction();
 			}
 		});
 		
@@ -164,16 +196,16 @@ public class ApplicationView extends JFrame {
 		/*******
 		 * create GUI for jp3 (JPanel Three)
 		 *******/
-		HandyJPanel jp3 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
+		jp3 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
 		jp3.setLayout(new BorderLayout(20,20));
-		JLabel jp3Label = new JLabel();
+		jp3Label = new JLabel();
 		jp3Label.setText("Interval Training");
-		//jp3.add(jp3Label);
+		
 
 		//JTextArea jp3InstructionsJTextArea  = new javax.swing.JTextArea();
-		JTextArea jp3ResultsJTextArea = new javax.swing.JTextArea();
-		JLabel jp3InstructionsLabel = new javax.swing.JLabel();
-		JLabel jp3ResultsLabel = new javax.swing.JLabel();
+		jp3ResultsJTextArea = new javax.swing.JTextArea();
+		jp3InstructionsLabel = new javax.swing.JLabel();
+		jp3ResultsLabel = new javax.swing.JLabel();
 
 		//jp3InstructionsJTextArea.setColumns(20);
 		//jp3InstructionsJTextArea.setRows(5);
@@ -201,9 +233,9 @@ public class ApplicationView extends JFrame {
 		
 
 		//buttons for jp3
-		JPanel jp3WestButtonPanel = new JPanel();
+		jp3WestButtonPanel = new JPanel();
 		jp3WestButtonPanel.setSize(100, 50);
-		JButton startbutton_jp3 = new JButton("Start Recording");
+		startbutton_jp3 = new JButton("Start Recording");
 		startbutton_jp3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {	
 				analyzer.startAction();
@@ -212,15 +244,34 @@ public class ApplicationView extends JFrame {
 		jp3WestButtonPanel.add(startbutton_jp3);
 
 
-		JButton stopbutton_jp3 = new JButton("Stop Recording and Submit");
+		stopbutton_jp3 = new JButton("Stop Recording and Submit");
 		stopbutton_jp3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				analyzer.stopAction();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				analyzer.intervalTrainingStopAction();
 			}
 		});
 		jp3WestButtonPanel.add(stopbutton_jp3);
 		jp3.add(jp3WestButtonPanel, BorderLayout.WEST);
 		
+	
+		String[] ranges = {"Soprano", "Alto", "Tenor", "Bass"};
+		jp3RangeJComboBox = new JComboBox<String>(ranges);
+		jp3WestButtonPanel.add(jp3RangeJComboBox);
+		
+		jp3PlayNoteButton = new JButton("Play Note");
+		jp3PlayNoteButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				analyzer.playNote();
+			}
+		});
+		jp3WestButtonPanel.add(jp3PlayNoteButton);
 		
 
 		/*
@@ -391,11 +442,21 @@ public class ApplicationView extends JFrame {
 
 		getContentPane().add(jtp);
 		setVisible(true); 
-		
-		analyzer.getView(this);	
+			
 	      
 	}
 	
+	public void setjp2ResultsJTextArea(String s){
+		jp2ResultsJTextArea.setText(s);
+	}
+	
+	public String getJjp3JComboBoxSelected(){
+		return (String)jp3RangeJComboBox.getSelectedItem();
+	}
+	
+	public void setjp3ResultsJTextArea(String s){
+		jp3ResultsJTextArea.setText(s);
+	}
 }
 
 
