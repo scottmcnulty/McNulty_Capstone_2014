@@ -57,16 +57,18 @@ public class ApplicationView extends JFrame {
 	JComboBox<String> jp3RangeJComboBox;
 	JButton jp3PlayNoteButton;
 	
+	JTextArea jp4ResultsJTextArea;
 	JComboBox<String> jp4NotesJComboBox;
 	String[] noteList = new String[45];
 	
 	public ApplicationView(final AnalyzerController analyzer){
 
+		
+		
 		setTitle("Harmonius"); 
 		setSize(1024,768);  //find out projector size
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(3);
-		
 
 		ArrayList<javax.sound.sampled.Mixer.Info> capMixers = new ArrayList<javax.sound.sampled.Mixer.Info>();
 		javax.sound.sampled.Mixer.Info mixers[] = AudioSystem.getMixerInfo();
@@ -93,7 +95,7 @@ public class ApplicationView extends JFrame {
 		jp1.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 80));
 		jp1Label = new JLabel();
 		jp1Label.setText("Harmonious");
-		jp1Label.setBorder(raisedetched);
+		//jp1Label.setBorder(raisedetched);
 		jp1Label.setFont(new Font("Courier New", Font.BOLD, 80));
 		jp1Label.setBackground(new Color(242,209,166));
 		//label1.setBackground(Color.LIGHT_GRAY);
@@ -104,7 +106,7 @@ public class ApplicationView extends JFrame {
 		
 		labelx = new JLabel();
 		labelx.setText("Please select an input device to use with this session:");
-		labelx.setBorder(raisedetched);
+		//labelx.setBorder(raisedetched);
 		labelx.setFont(new Font("Courier New", Font.ITALIC, 12));
 		labelx.setBackground(new Color(242,209,166));
 		//label1.setBackground(Color.LIGHT_GRAY);
@@ -125,7 +127,6 @@ public class ApplicationView extends JFrame {
 		//main.add(mixer_selector);
 		jp1.add(mixer_selector);
 
-		//this is a bit of a hack, FIX THIS
 		analyzer.setInputDevice((javax.sound.sampled.Mixer.Info)mixer_selector.getSelectedItem());
 
 
@@ -286,7 +287,7 @@ public class ApplicationView extends JFrame {
 		//jp4.add(jp4Label);
 
 		//JTextArea jp4InstructionsJTextArea  = new javax.swing.JTextArea();
-		JTextArea jp4ResultsJTextArea = new javax.swing.JTextArea();
+		jp4ResultsJTextArea = new javax.swing.JTextArea();
 		JLabel jp4InstructionsLabel = new javax.swing.JLabel();
 		JLabel jp4ResultsLabel = new javax.swing.JLabel();
 
@@ -302,9 +303,9 @@ public class ApplicationView extends JFrame {
 		jp4ResultsJTextArea.setColumns(20);
 		jp4ResultsJTextArea.setRows(5);
 		jp4ResultsJTextArea.setText("This is for results");
-		//jp4.add(jp4ResultsJTextArea);
+		jp4.add(jp4ResultsJTextArea);
 
-		jp4InstructionsLabel.setText("INSTRUCTIONS: Press play to play a note, select the name of the note, and press submit.");
+		jp4InstructionsLabel.setText("INSTRUCTIONS: Press play to hear a note, select the name of the note, and press submit.");
 		//jp4.add(jp4InstructionsLabel);
 		jp4ResultsLabel.setText("RESULTS");
 		//jp4.add(jp4ResultsLabel);
@@ -320,27 +321,28 @@ public class ApplicationView extends JFrame {
 		JPanel jp4WestButtonPanel = new JPanel();
 		jp4WestButtonPanel.setSize(100, 50);
 		JButton startbutton_jp4 = new JButton("Play Note");
+    	
 		startbutton_jp4.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {	
-				analyzer.startAction();
+			public void actionPerformed(ActionEvent e) {
+				analyzer.noteIdPlayNote();
+				
 			}
 		});
 		jp4WestButtonPanel.add(startbutton_jp4);
 
-
+		noteList = analyzer.getNoteNameList();
+		jp4NotesJComboBox = new JComboBox<String>(noteList);
+		jp4WestButtonPanel.add(jp4NotesJComboBox);
+		
 		JButton stopbutton_jp4 = new JButton("Submit Answer");
 		stopbutton_jp4.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				analyzer.stopAction();
+				analyzer.compareNoteId((String)jp4NotesJComboBox.getSelectedItem());
 			}
 		});
 		jp4WestButtonPanel.add(stopbutton_jp4);
 		jp4.add(jp4WestButtonPanel, BorderLayout.WEST);
 		
-		
-		
-		//jp4NotesJComboBox = new JComboBox<String>(noteList);
-		//jp4WestButtonPanel.add(jp4NotesJComboBox);
 		
 		
 		
@@ -461,6 +463,10 @@ public class ApplicationView extends JFrame {
 	
 	public void setjp3ResultsJTextArea(String s){
 		jp3ResultsJTextArea.setText(s);
+	}
+	
+	public void setjp4ResultsJTextArea(String s){
+		jp4ResultsJTextArea.setText(s);
 	}
 }
 

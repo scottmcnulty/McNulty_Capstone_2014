@@ -36,10 +36,14 @@ public class AnalyzerController {
 	WesternScale ws = new WesternScale();
 	
 	ArrayList<Note> notes = ws.getNotes();
-	
+
 	
 	Random gen = new Random();
+	
+	//current note being worked on
 	Note currentNote;
+	
+	
 	private double[] pitchHistoryTotal = new double[6000];
     double averagePitch;
 	int pitchCounter = 0;
@@ -319,9 +323,7 @@ public class AnalyzerController {
 
 	}
 	
-	/* Tight coupling, will be decoupled with model implementation
-	 * TO-FIX
-	 */
+
 	public ApplicationView view; 
 	
 	public void getView(ApplicationView v){
@@ -330,5 +332,41 @@ public class AnalyzerController {
 	
 	public AnalyzerController(Model model) {
 
+	}
+
+	public String[] getNoteNameList() {
+		
+		String[] noteList = new String[notes.size()];
+		int counter = 0;
+		for(Note n: notes){
+			noteList[counter] = n.getNoteName();
+			counter++;
+		}
+		return noteList;
+	}
+
+	public void noteIdPlayNote() {
+		int randomNote  = gen.nextInt(24)+8;
+		String soundName = notes.get(randomNote).getSoundFile();    
+		String noteName = notes.get(randomNote).getNoteName();
+		try{
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+			Clip clip = AudioSystem.getClip();
+			clip.open(audioInputStream);
+			clip.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
+		//set the current note for comparison
+		currentNote = notes.get(randomNote);
+	}
+
+	public void compareNoteId(String selected) {
+		if(selected == currentNote.getNoteName()){
+			view.setjp4ResultsJTextArea("That's correct!");
+		}
+		else{
+			view.setjp4ResultsJTextArea("That's not right, try again.");
+		}
 	}
 }
