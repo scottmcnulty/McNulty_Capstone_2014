@@ -61,6 +61,10 @@ public class ApplicationView extends JFrame {
 	JComboBox<String> jp4NotesJComboBox;
 	String[] noteList = new String[45];
 	
+	JLabel jp5NoteDisplayJLabel;
+	JComboBox jp5RangeJComboBox;
+	JTextArea jp5ResultsJTextArea;
+	
 	public ApplicationView(final AnalyzerController analyzer){
 
 		
@@ -261,6 +265,7 @@ public class ApplicationView extends JFrame {
 			}
 		});
 		jp3WestButtonPanel.add(stopbutton_jp3);
+		jp3WestButtonPanel.setOpaque(false);
 		jp3.add(jp3WestButtonPanel, BorderLayout.WEST);
 		
 	
@@ -341,6 +346,7 @@ public class ApplicationView extends JFrame {
 			}
 		});
 		jp4WestButtonPanel.add(stopbutton_jp4);
+		jp4WestButtonPanel.setOpaque(false);
 		jp4.add(jp4WestButtonPanel, BorderLayout.WEST);
 		
 		
@@ -355,10 +361,10 @@ public class ApplicationView extends JFrame {
 		jp5.setLayout(new BorderLayout(20,20));
 		JLabel jp5Label = new JLabel();
 		jp5Label.setText("Perfect Pitch");
-		//jp5.add(jp3Label);
+		jp5.add(jp5Label);
 
 		//JTextArea jp5InstructionsJTextArea  = new javax.swing.JTextArea();
-		JTextArea jp5ResultsJTextArea = new javax.swing.JTextArea();
+		jp5ResultsJTextArea = new javax.swing.JTextArea();
 		JLabel jp5InstructionsLabel = new javax.swing.JLabel();
 		JLabel jp5ResultsLabel = new javax.swing.JLabel();
 
@@ -390,6 +396,25 @@ public class ApplicationView extends JFrame {
 		//buttons for jp5
 		JPanel jp5WestButtonPanel = new JPanel();
 		jp5WestButtonPanel.setSize(100, 50);
+		
+		String[] PPranges = {"Soprano", "Alto", "Tenor", "Bass"};
+		jp5RangeJComboBox = new JComboBox<String>(PPranges);
+		jp5WestButtonPanel.add(jp5RangeJComboBox);
+		
+		
+		JButton getNotebutton_jp5 = new JButton("Get Note");
+		getNotebutton_jp5.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {	
+				analyzer.setPPJLabelToCurrentNote();
+			}
+		});
+		jp5WestButtonPanel.add(getNotebutton_jp5);
+		
+		jp5NoteDisplayJLabel  = new JLabel("E2");
+		jp5WestButtonPanel.add(jp5NoteDisplayJLabel);
+		
+		
+		
 		JButton startbutton_jp5 = new JButton("Start Recording");
 		startbutton_jp5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {	
@@ -403,9 +428,17 @@ public class ApplicationView extends JFrame {
 		stopbutton_jp5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				analyzer.stopAction();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				analyzer.PPstopAction();
 			}
 		});
 		jp5WestButtonPanel.add(stopbutton_jp5);
+		jp5WestButtonPanel.setOpaque(false);
 		jp5.add(jp5WestButtonPanel, BorderLayout.WEST);
 
 
@@ -457,8 +490,16 @@ public class ApplicationView extends JFrame {
 		jp2ResultsJTextArea.setText(s);
 	}
 	
+	public void setjp5ResultsJTextArea(String s){
+		jp5ResultsJTextArea.setText(s);
+	}
+	
 	public String getJjp3JComboBoxSelected(){
 		return (String)jp3RangeJComboBox.getSelectedItem();
+	}
+	
+	public String getJp5RangeJComboBoxSelected(){
+		return (String)jp5RangeJComboBox.getSelectedItem();
 	}
 	
 	public void setjp3ResultsJTextArea(String s){
@@ -467,6 +508,10 @@ public class ApplicationView extends JFrame {
 	
 	public void setjp4ResultsJTextArea(String s){
 		jp4ResultsJTextArea.setText(s);
+	}
+	
+	public void setjp5NoteDisplayJLabel(String s){
+		jp5NoteDisplayJLabel.setText(s);
 	}
 }
 

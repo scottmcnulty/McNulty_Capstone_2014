@@ -369,4 +369,69 @@ public class AnalyzerController {
 			view.setjp4ResultsJTextArea("That's not right, try again.");
 		}
 	}
+
+	public void setPPJLabelToCurrentNote() {
+		
+		String range = view.getJp5RangeJComboBoxSelected();
+		System.out.println(range);
+		
+		
+		int randomNote = 0;
+		
+		switch(range){
+
+		case "Soprano":
+			randomNote  = gen.nextInt(24)+20;
+			
+			break;
+		case "Alto":
+			randomNote  = gen.nextInt(24)+13;
+		
+		break;
+		case "Tenor":
+			
+			randomNote  = gen.nextInt(24)+8;
+		
+			break;
+		case "Bass":
+			randomNote  = gen.nextInt(24);
+			
+		break;
+		}
+		currentNote = notes.get(randomNote);
+		view.setjp5NoteDisplayJLabel(currentNote.getNoteName());
+	}
+
+	public void PPstopAction() {
+		System.out.println("method call " + averagePitch );
+		double returnable = averagePitch;
+		
+		double score = 0;
+		
+		for(Note n: notes){
+			
+			// go over the frequency
+			if(n.getFrequency() > returnable){
+				System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
+				//find out if its closer to freq above or below
+				if((returnable - currentNote.getFrequency()) > (n.getFrequency() - returnable)){
+					System.out.println("got to upper"  + returnable + " " + n.getFrequency());
+					score = n.getFrequency() - returnable;
+					view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
+					break;
+				}
+				else{
+					System.out.println("got to lower" + returnable + " " + currentNote.getFrequency());
+					score = returnable - currentNote.getFrequency();
+					view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
+					break;
+				}
+			}
+		}
+		System.out.println("SCORE " + score );
+		
+		view.setjp5ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
+			averagePitch = 1;
+		
+	}
 }
