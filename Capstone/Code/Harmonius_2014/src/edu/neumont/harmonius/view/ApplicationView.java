@@ -57,6 +57,8 @@ public class ApplicationView extends JFrame {
 	JComboBox<String> jp3RangeJComboBox;
 	JButton jp3PlayNoteButton;
 	
+	JComboBox<String> jp4NotesJComboBox;
+	String[] noteList = new String[45];
 	
 	public ApplicationView(final AnalyzerController analyzer){
 
@@ -302,7 +304,7 @@ public class ApplicationView extends JFrame {
 		jp4ResultsJTextArea.setText("This is for results");
 		//jp4.add(jp4ResultsJTextArea);
 
-		jp4InstructionsLabel.setText("INSTRUCTIONS: Press play to play a note, then enter note name in space provided:");
+		jp4InstructionsLabel.setText("INSTRUCTIONS: Press play to play a note, select the name of the note, and press submit.");
 		//jp4.add(jp4InstructionsLabel);
 		jp4ResultsLabel.setText("RESULTS");
 		//jp4.add(jp4ResultsLabel);
@@ -320,7 +322,7 @@ public class ApplicationView extends JFrame {
 		JButton startbutton_jp4 = new JButton("Play Note");
 		startbutton_jp4.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {	
-				//analyzer.startAction();
+				analyzer.startAction();
 			}
 		});
 		jp4WestButtonPanel.add(startbutton_jp4);
@@ -329,13 +331,16 @@ public class ApplicationView extends JFrame {
 		JButton stopbutton_jp4 = new JButton("Submit Answer");
 		stopbutton_jp4.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//analyzer.stopAction();
+				analyzer.stopAction();
 			}
 		});
 		jp4WestButtonPanel.add(stopbutton_jp4);
 		jp4.add(jp4WestButtonPanel, BorderLayout.WEST);
 		
 		
+		
+		//jp4NotesJComboBox = new JComboBox<String>(noteList);
+		//jp4WestButtonPanel.add(jp4NotesJComboBox);
 		
 		
 		

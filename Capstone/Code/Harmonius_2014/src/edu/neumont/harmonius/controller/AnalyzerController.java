@@ -115,19 +115,17 @@ public class AnalyzerController {
 				public void handleDetectedPitch(float time, float pitch) {
 
 					boolean noteDetected = pitch != -1;
-					double detectedNote = 69D + (12D * Math.log(pitch / 440D))
-							/ Math.log(2D);
+					double detectedNote = 69D + (12D * Math.log(pitch / 440D))/ Math.log(2D);
 					// noteDetected = noteDetected && Math.abs(detectedNote - Math.round(detectedNote)) > 0.3;
 
-					if (pitchHistoryPos == pitchHistory.length)
+					if (pitchHistoryPos == pitchHistory.length){
 						pitchHistoryPos = 0;
-
+					}
 					pitchHistoryTotal[pitchCounter] = pitch;
 					pitchCounter++;
 
 					// ternary for pitch_history as a regular array
-					pitchHistory[pitchHistoryPos] = noteDetected ? detectedNote
-							: 0.0;
+					pitchHistory[pitchHistoryPos] = noteDetected ? detectedNote: 0.0;
 
 					//int jj = pitchHistoryPos;
 					pitchHistoryPos++;
@@ -139,7 +137,7 @@ public class AnalyzerController {
 			
 			for (int i = 0; i < pitchHistoryTotal.length; i++) {
 
-				//System.out.println(pitchHistoryTotal[i] + "\t");
+				System.out.println(pitchHistoryTotal[i] + "\t");
 
 				if (pitchHistoryTotal[i] > 0) { // filter out zeros and -1 (no signal)
 
@@ -230,34 +228,61 @@ public class AnalyzerController {
 	public void playNote() {
 		String range = view.getJjp3JComboBoxSelected();
 		System.out.println(range);
+		String soundName = "";
+		int randomNote = 0;
 		
 		switch(range){
-		
+
 		case "Soprano":
-			
-			break;
-		case "Alto":
-			
-			break;
-		case "Tenor":
-			String soundName = "eb3hhard.wav";    
+			randomNote  = gen.nextInt(24)+20;
+			soundName = notes.get(randomNote).getSoundFile();    
 			try{
-			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
-			Clip clip = AudioSystem.getClip();
-			clip.open(audioInputStream);
-			clip.start();
+				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+				Clip clip = AudioSystem.getClip();
+				clip.open(audioInputStream);
+				clip.start();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}	
+			break;
+		case "Alto":
+			randomNote  = gen.nextInt(24)+13;
+			soundName = notes.get(randomNote).getSoundFile();    
+			try{
+				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+				Clip clip = AudioSystem.getClip();
+				clip.open(audioInputStream);
+				clip.start();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}	
+		break;
+		case "Tenor":
 			
+			randomNote  = gen.nextInt(24)+8;
+				soundName = notes.get(randomNote).getSoundFile();    
+				try{
+					AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+					Clip clip = AudioSystem.getClip();
+					clip.open(audioInputStream);
+					clip.start();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}	
 			break;
 		case "Bass":
-			
-			break;
-			
+			randomNote  = gen.nextInt(24);
+			soundName = notes.get(randomNote).getSoundFile();    
+			try{
+				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+				Clip clip = AudioSystem.getClip();
+				clip.open(audioInputStream);
+				clip.start();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}	
+		break;
 		}
-		
 	}
 	
 	public void intervalTrainingStopAction(){
