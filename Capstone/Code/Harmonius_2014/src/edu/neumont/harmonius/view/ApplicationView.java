@@ -10,10 +10,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import javax.sound.sampled.Mixer.Info;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioSystem;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -30,15 +32,18 @@ import edu.neumont.harmonius.controller.AnalyzerController;
 
 public class ApplicationView extends JFrame {
 
+	ArrayList<Info> soundSources;
 	Border raisedetched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+
 	JTabbedPane jtp;
 	
+	//tab 1
 	HandyJPanel jp1;
 	JLabel jp1Label;
-	JLabel labelx;
-	@SuppressWarnings("rawtypes")
-	JComboBox mixer_selector;
+	JLabel titleLabel;
+	JComboBox<Info> mixer_selector;
 	
+	//tab2
 	HandyJPanel jp2;
 	JLabel jp2Label;
 	JTextArea jp2ResultsJTextArea;
@@ -47,6 +52,7 @@ public class ApplicationView extends JFrame {
 	JPanel jp2WestButtonPanel;
 	JButton startbutton_jp2, stopbutton_jp2;
 	
+	//tab3
 	HandyJPanel jp3;
 	JLabel jp3Label;
 	JTextArea jp3ResultsJTextArea;
@@ -57,44 +63,74 @@ public class ApplicationView extends JFrame {
 	JComboBox<String> jp3RangeJComboBox;
 	JButton jp3PlayNoteButton;
 	
+	//tab4
+	HandyJPanel jp4; 
+	JLabel jp4Label;
+	JLabel jp4InstructionsLabel;
 	JTextArea jp4ResultsJTextArea;
 	JComboBox<String> jp4NotesJComboBox;
-	String[] noteList = new String[45];
+	JLabel jp4ResultsLabel;
+	JPanel jp4WestButtonPanel;
+	JButton startbutton_jp4;
+	JButton stopbutton_jp4;
 	
+	//tab 5
+	HandyJPanel jp5;
 	JLabel jp5NoteDisplayJLabel;
-	JComboBox jp5RangeJComboBox;
+	JComboBox<String> jp5RangeJComboBox;
 	JTextArea jp5ResultsJTextArea;
+	JLabel jp5Label;
+	JLabel jp5InstructionsLabel;
+	JLabel jp5ResultsLabel;
+	JPanel jp5WestButtonPanel;
+	JButton getNotebutton_jp5;
+	JButton startbutton_jp5;
+	JButton stopbutton_jp5;
+	
+	//tab6
+	HandyJPanel jp6;
+	JLabel jp6Label;
+	JTextArea jp6InstructionsJTextArea;
+	JTextArea jp6ResultsJTextArea;
+	JLabel jp6InstructionsLabel;
+	JLabel jp6ResultsLabel;
+	
+	String[] noteList = new String[45];
+	String[] ranges = {"Soprano", "Alto", "Tenor", "Bass"};
+	ImageIcon icon;
+	BufferedImage musicalNotes;
+	BufferedImage burntGradient;
 	
 	public ApplicationView(final AnalyzerController analyzer){
-
-		
-		
+	
 		setTitle("Harmonius"); 
 		setSize(1024,768);  //find out projector size
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(3);
-
-		ArrayList<javax.sound.sampled.Mixer.Info> capMixers = new ArrayList<javax.sound.sampled.Mixer.Info>();
-		javax.sound.sampled.Mixer.Info mixers[] = AudioSystem.getMixerInfo();
-
+		
+		soundSources = new ArrayList<Info>();
+		Info mixers[] = AudioSystem.getMixerInfo();
+		//pane inside of main JFrame with tabbed panes
 		jtp = new JTabbedPane();
 
-		/*Load images
-		 * 
-		 */
-		BufferedImage musicalNotes = null;
-		BufferedImage burntGradient = null;
+		/***************
+		 * Load images *
+		 **************/
+		
+		
 		try {
+			icon = new ImageIcon("notes.png");
 		    musicalNotes = ImageIO.read(new File("musicalnotesbg.jpg"));
 		    burntGradient = ImageIO.read(new File("burntGradient.jpg"));
 		} catch (IOException e) {
+			System.out.println("Error reading in image files.");
 			e.printStackTrace();
 		}
 
 
-		/***********
-		 * create GUI for jp1 (JPanel One)
-		 ***********/
+		/***************************
+		 * create jp1 (JPanel One) *
+		 ***************************/
 		jp1 = new HandyJPanel(musicalNotes, 0, 0, 1024, 768);
 		jp1.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 80));
 		jp1Label = new JLabel();
@@ -102,41 +138,37 @@ public class ApplicationView extends JFrame {
 		//jp1Label.setBorder(raisedetched);
 		jp1Label.setFont(new Font("Courier New", Font.BOLD, 80));
 		jp1Label.setBackground(new Color(242,209,166));
-		//label1.setBackground(Color.LIGHT_GRAY);
+		
 		
 		jp1Label.setForeground(Color.BLACK);
 		jp1Label.setOpaque(true);
 		jp1.add(jp1Label);
 		
-		labelx = new JLabel();
-		labelx.setText("Please select an input device to use with this session:");
-		//labelx.setBorder(raisedetched);
-		labelx.setFont(new Font("Courier New", Font.ITALIC, 12));
-		labelx.setBackground(new Color(242,209,166));
-		//label1.setBackground(Color.LIGHT_GRAY);
+		titleLabel = new JLabel();
+		titleLabel.setText("Please select an input device to use with this session:");
+		//titleLabel.setBorder(raisedetched);
+		titleLabel.setFont(new Font("Courier New", Font.ITALIC, 12));
+		titleLabel.setBackground(new Color(242,209,166));
 		
-		labelx.setForeground(Color.BLACK);
-		labelx.setOpaque(true);
-		jp1.add(labelx);
 		
+		titleLabel.setForeground(Color.BLACK);
+		titleLabel.setOpaque(true);
+		jp1.add(titleLabel);
 		
 		//set up the combobox data for user to select input device	
 		for (int i = 0; i < mixers.length; i++) {
-			javax.sound.sampled.Mixer.Info mixerinfo = mixers[i];
+			Info mixerinfo = mixers[i];
 			if (AudioSystem.getMixer(mixerinfo).getTargetLineInfo().length != 0)
-				capMixers.add(mixerinfo);
+				soundSources.add(mixerinfo);
 		}
-		mixer_selector = new JComboBox(capMixers.toArray());
-
-		//main.add(mixer_selector);
+		mixer_selector = new JComboBox(soundSources.toArray());
 		jp1.add(mixer_selector);
+		analyzer.setInputDevice((Info)mixer_selector.getSelectedItem());
 
-		analyzer.setInputDevice((javax.sound.sampled.Mixer.Info)mixer_selector.getSelectedItem());
 
-
-		/***********
-		 * create GUI for jp2 (JPanel Two)
-		 ***********/
+		/****************************
+		 * create jp2 (JPanel Two)  *
+		 ***************************/
 		jp2 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
 		jp2.setLayout(new BorderLayout(20,20));
 		jp2Label = new JLabel();
@@ -151,11 +183,9 @@ public class ApplicationView extends JFrame {
 		//jp2InstructionsJTextArea.setRows(5);
 		//jp2InstructionsJTextArea.setText("This is for Pitch Warm-Up exercises.");
 
-
 		jp2ResultsJTextArea.setColumns(20);
 		jp2ResultsJTextArea.setRows(5);
 		jp2ResultsJTextArea.setText("This is for results");
-
 		jp2InstructionsLabel.setText("INSTRUCTIONS:  Press the Start Recording button and sing a note");
 		jp2ResultsLabel.setText("RESULTS");
 
@@ -200,9 +230,9 @@ public class ApplicationView extends JFrame {
 		jp2.add(jp2WestButtonPanel, BorderLayout.WEST);
 
 
-		/*******
-		 * create GUI for jp3 (JPanel Three)
-		 *******/
+		/******************************
+		 * create jp3 (JPanel Three)  *
+		 ******************************/
 		jp3 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
 		jp3.setLayout(new BorderLayout(20,20));
 		jp3Label = new JLabel();
@@ -269,7 +299,7 @@ public class ApplicationView extends JFrame {
 		jp3.add(jp3WestButtonPanel, BorderLayout.WEST);
 		
 	
-		String[] ranges = {"Soprano", "Alto", "Tenor", "Bass"};
+		;
 		jp3RangeJComboBox = new JComboBox<String>(ranges);
 		jp3WestButtonPanel.add(jp3RangeJComboBox);
 		
@@ -282,19 +312,19 @@ public class ApplicationView extends JFrame {
 		jp3WestButtonPanel.add(jp3PlayNoteButton);
 		
 
-		/*
-		 * create GUI for jp4 (JPanel Four)
-		 */
-		HandyJPanel jp4 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
+		/*****************************
+		 * create jp4 (JPanel Four)  *
+		 *****************************/
+		jp4 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
 		jp4.setLayout(new BorderLayout(20,20));
-		JLabel jp4Label = new JLabel();
+		jp4Label = new JLabel();
 		jp4Label.setText("Note Identification Training");
 		//jp4.add(jp4Label);
 
 		//JTextArea jp4InstructionsJTextArea  = new javax.swing.JTextArea();
 		jp4ResultsJTextArea = new javax.swing.JTextArea();
-		JLabel jp4InstructionsLabel = new javax.swing.JLabel();
-		JLabel jp4ResultsLabel = new javax.swing.JLabel();
+		jp4InstructionsLabel = new javax.swing.JLabel();
+		jp4ResultsLabel = new javax.swing.JLabel();
 
 		//jp4InstructionsJTextArea.setColumns(20);
 		//jp4InstructionsJTextArea.setRows(5);
@@ -319,13 +349,11 @@ public class ApplicationView extends JFrame {
 		jp4.add(jp4InstructionsLabel, BorderLayout.CENTER);
 		jp4.add(jp4ResultsLabel, BorderLayout.SOUTH);
 		jp4.add(jp4ResultsJTextArea, BorderLayout.SOUTH);
+				
 		
-		
-		
-		//buttons for jp4
-		JPanel jp4WestButtonPanel = new JPanel();
+		jp4WestButtonPanel = new JPanel();
 		jp4WestButtonPanel.setSize(100, 50);
-		JButton startbutton_jp4 = new JButton("Play Note");
+		startbutton_jp4 = new JButton("Play Note");
     	
 		startbutton_jp4.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -339,7 +367,7 @@ public class ApplicationView extends JFrame {
 		jp4NotesJComboBox = new JComboBox<String>(noteList);
 		jp4WestButtonPanel.add(jp4NotesJComboBox);
 		
-		JButton stopbutton_jp4 = new JButton("Submit Answer");
+		stopbutton_jp4 = new JButton("Submit Answer");
 		stopbutton_jp4.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				analyzer.compareNoteId((String)jp4NotesJComboBox.getSelectedItem());
@@ -354,19 +382,19 @@ public class ApplicationView extends JFrame {
 		
 		
 
-		/*
-		 * create GUI for jp5 (JPanel Five)
-		 */
-		HandyJPanel jp5 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
+		/*************************************
+		 * create GUI for jp5 (JPanel Five)  *
+		 *************************************/
+		jp5 = new HandyJPanel(burntGradient, 0, 0, 1024, 768);
 		jp5.setLayout(new BorderLayout(20,20));
-		JLabel jp5Label = new JLabel();
+		jp5Label = new JLabel();
 		jp5Label.setText("Perfect Pitch");
 		jp5.add(jp5Label);
 
 		//JTextArea jp5InstructionsJTextArea  = new javax.swing.JTextArea();
 		jp5ResultsJTextArea = new javax.swing.JTextArea();
-		JLabel jp5InstructionsLabel = new javax.swing.JLabel();
-		JLabel jp5ResultsLabel = new javax.swing.JLabel();
+		jp5InstructionsLabel = new javax.swing.JLabel();
+		jp5ResultsLabel = new javax.swing.JLabel();
 
 		//jp5InstructionsJTextArea.setColumns(20);
 		//jp5InstructionsJTextArea.setRows(5);
@@ -394,7 +422,7 @@ public class ApplicationView extends JFrame {
 		
 
 		//buttons for jp5
-		JPanel jp5WestButtonPanel = new JPanel();
+		jp5WestButtonPanel = new JPanel();
 		jp5WestButtonPanel.setSize(100, 50);
 		
 		String[] PPranges = {"Soprano", "Alto", "Tenor", "Bass"};
@@ -402,7 +430,7 @@ public class ApplicationView extends JFrame {
 		jp5WestButtonPanel.add(jp5RangeJComboBox);
 		
 		
-		JButton getNotebutton_jp5 = new JButton("Get Note");
+		getNotebutton_jp5 = new JButton("Get Note");
 		getNotebutton_jp5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {	
 				analyzer.setPPJLabelToCurrentNote();
@@ -415,7 +443,7 @@ public class ApplicationView extends JFrame {
 		
 		
 		
-		JButton startbutton_jp5 = new JButton("Start Recording");
+		startbutton_jp5 = new JButton("Start Recording");
 		startbutton_jp5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {	
 				analyzer.startAction();
@@ -424,7 +452,7 @@ public class ApplicationView extends JFrame {
 		jp5WestButtonPanel.add(startbutton_jp5);
 
 
-		JButton stopbutton_jp5 = new JButton("Stop Recording and Submit");
+		stopbutton_jp5 = new JButton("Stop Recording and Submit");
 		stopbutton_jp5.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				analyzer.stopAction();
@@ -442,23 +470,23 @@ public class ApplicationView extends JFrame {
 		jp5.add(jp5WestButtonPanel, BorderLayout.WEST);
 
 
-		/*
-		 * create GUI for jp6 (JPanel Six) -TODO
-		 */
-		HandyJPanel jp6 = new HandyJPanel(burntGradient,  0, 0, 1024, 768);
+		/***********************************
+		 * create GUI for jp6 (JPanel Six) *
+		 ***********************************/
+		jp6 = new HandyJPanel(burntGradient,  0, 0, 1024, 768);
 
-		JLabel label6 = new JLabel();
-		label6.setText("Session Training");
-		jp6.add(label6);
+		jp6Label = new JLabel();
+		jp6Label.setText("Session Training");
+		jp6.add(jp6Label);
 
-		JTextArea jp6InstructionsJTextArea  = new javax.swing.JTextArea();
-		JTextArea jp6ResultsJTextArea = new javax.swing.JTextArea();
-		JLabel jp6InstructionsLabel = new javax.swing.JLabel();
-		JLabel jp6ResultsLabel = new javax.swing.JLabel();
+		jp6InstructionsJTextArea  = new javax.swing.JTextArea();
+		jp6ResultsJTextArea = new javax.swing.JTextArea();
+		jp6InstructionsLabel = new javax.swing.JLabel();
+		jp6ResultsLabel = new javax.swing.JLabel();
 
 		jp6InstructionsJTextArea.setColumns(20);
 		jp6InstructionsJTextArea.setRows(5);
-		jp6InstructionsJTextArea.setText("This is for Session Training exercises.");
+		jp6InstructionsJTextArea.setText("This is for Session Training exercises.         sakldjhfksad                  skadjf ha           ksajdddddd");
 		jp6.add(jp6InstructionsJTextArea);
 
 		jp6ResultsJTextArea.setColumns(20);
@@ -472,20 +500,24 @@ public class ApplicationView extends JFrame {
 		jp6.add(jp6ResultsLabel);
 
 		
+		/**************
+		 * Main Frame *
+		 **************/
 		//adds panels jp1 - jp6 to the appropriate tabbed windows
-		jtp.addTab("Welcome Page", jp1);
-		jtp.addTab("Warm Up", jp2);
-		jtp.addTab("Interval Training", jp3);
-		jtp.addTab("Note ID", jp4);
-		jtp.addTab("Perfect Pitch", jp5);
-		//jtp.addTab("Session Training", jp6);
-
+		jtp.addTab("Welcome Page", icon, jp1, "Welcome Page");
+		jtp.addTab("Warm Up", icon, jp2, "Warm Up");
+		jtp.addTab("Interval Training", icon, jp3, "Interval Training");
+		jtp.addTab("Note ID", icon, jp4, "Note ID");
+		jtp.addTab("Perfect Pitch", icon, jp5, "Perfect Pitch");
+		jtp.addTab("Session Training", icon, jp6, "Session Training");
 		getContentPane().add(jtp);
-		setVisible(true); 
-			
-	      
+		setVisible(true);     
 	}
 	
+	
+	/**********************
+	 *   Helper Methods   *
+	 **********************/
 	public void setjp2ResultsJTextArea(String s){
 		jp2ResultsJTextArea.setText(s);
 	}

@@ -11,6 +11,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
+import javax.sound.sampled.Mixer.Info;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -24,33 +25,23 @@ import edu.neumont.harmonius.view.ApplicationView;
 
 public class AnalyzerController {
 	
-	javax.sound.sampled.Mixer.Info target;
 	
 	// volatile because it runs on its own thread - volatile guarantees the most updated value
 	volatile AudioInputProcessor aiprocessor;
-
 	// for processing files of notes
-	String fileName = null;
-
+	private String fileName = null;
 	// can replace with other tonal scales with their notes and pitch values
-	WesternScale ws = new WesternScale();
-	
-	ArrayList<Note> notes = ws.getNotes();
-
-	
-	Random gen = new Random();
-	
-	//current note being worked on
-	Note currentNote;
-	
-	
+	private WesternScale ws = new WesternScale();
+	private ArrayList<Note> notes = ws.getNotes();
+	private Random gen = new Random();
+	private Note currentNote;
 	private double[] pitchHistoryTotal = new double[6000];
     double averagePitch;
 	int pitchCounter = 0;
-
+	Info microphone;
+	
 	public void setInputDevice(javax.sound.sampled.Mixer.Info target) {
-		this.target = target;
-
+		this.microphone = target;
 	}
 
 	
@@ -65,7 +56,7 @@ public class AnalyzerController {
 		}
 
 		public void run() {
-			javax.sound.sampled.Mixer.Info selected = (javax.sound.sampled.Mixer.Info) target; // mixer_selector.getSelectedItem();
+			javax.sound.sampled.Mixer.Info selected = (javax.sound.sampled.Mixer.Info) microphone; // mixer_selector.getSelectedItem();
 			if (selected == null)
 				return;
 			try {
