@@ -502,7 +502,7 @@ public class ApplicationView extends JFrame {
 		jtp.addTab("Interval Training", noteIcon, jp3, "Interval Training");
 		jtp.addTab("Note ID", noteIcon, jp4, "Note ID");
 		jtp.addTab("Perfect Pitch", noteIcon, jp5, "Perfect Pitch");
-		jtp.addTab("Session Training", noteIcon, jp6, "Session Training");
+		//jtp.addTab("Session Training", noteIcon, jp6, "Session Training");
 		getContentPane().add(jtp);
 		setVisible(true);     
 	}

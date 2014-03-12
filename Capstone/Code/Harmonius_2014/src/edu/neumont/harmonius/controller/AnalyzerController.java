@@ -13,6 +13,9 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 import edu.neumont.harmonius.model.Model;
 import edu.neumont.harmonius.note.Note;
@@ -21,6 +24,8 @@ import edu.neumont.harmonius.vendor.AudioFloatInputStream;
 import edu.neumont.harmonius.vendor.Yin;
 import edu.neumont.harmonius.vendor.Yin.DetectedPitchHandler;
 import edu.neumont.harmonius.view.ApplicationView;
+import edu.neumont.harmonius.view.HandyJPanel;
+import edu.neumont.harmonius.view.JPlotPanel;
 
 
 public class AnalyzerController {
@@ -38,17 +43,15 @@ public class AnalyzerController {
 	// for processing files of notes
 	private String fileName = null;
 	
-	// can replace with other tonal scales with their notes and pitch values
+	//can replace with other tonal scales with their notes and pitch values
 	private WesternScale ws = new WesternScale();
 	
 	public ArrayList<Note> notes = ws.getNotes();
 	private Random gen = new Random();
-	private Note currentNote;
-	private int currentInterval;
+	private Note currentNote = notes.get(0);
+	private int currentInterval = 0;
 	private String[] intervals = {"Unison", "Minor Second", "Major Second", "Minor Third", "Major Third", "Perfect Fourth", "Diminished Fifth", "Perfect Fifth", "Minor Sixth", "Major Sixth", "Minor Seventh", "Major Seventh", "Perfect Octave"};
-	
     private ArrayList<Float> pitches = new ArrayList<Float>();
-	
     double averagePitch = 0.0;
 	Mixer.Info microphone;
 	
@@ -117,7 +120,7 @@ public class AnalyzerController {
 					pitchAccum += f.floatValue();
 					pitchCount++;
 				}
-				else //beginning of blank space?
+				else //beginning of blank space
 				{
 					break; //found the end
 				}
@@ -126,17 +129,10 @@ public class AnalyzerController {
 			
 			averagePitch = pitchAccum / pitchCount;
 			System.out.print("\n Average pitch = " + averagePitch);
-			//plot(pitches,averagePitch);
+			plot();
 			pitches.clear();
 		}
 	}
-	
-	
-  /*private void plot(ArrayList<Float> pitches, double averagePitch) {
-		int selected = view.jtp.getSelectedIndex();
-		JPlotPanel plotJPanel  = new JPlotPanel(true, pitches, 200.0F);
-		view.jtp.getComponentAt(selected).add(plotJPanel);
-	}*/
 
 	private String getNote(float pitch) {
 		String note = "";
@@ -169,41 +165,47 @@ public class AnalyzerController {
 	}
 	
 	public void warmUpResultAction(){
-			
-			System.out.println("method call " + averagePitch );
-			double returnable = averagePitch;
-			
-			double score = 0;
-			double currFreq = 0;
-			for(Note n: notes){
-				
-				// go over the frequency
-				if(n.getFrequency() > returnable){
-					System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
-					//find out if its closer to freq above or below
-					if((returnable - currFreq) > (n.getFrequency() - returnable)){
-						System.out.println("got to upper"  + returnable + " " + n.getFrequency());
-						score = n.getFrequency() - returnable;
-						view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch, a " + n.getNoteName());
-						break;
-					}
-					else{
-						System.out.println("got to lower" + returnable + " " + currFreq);
-						score = returnable - currFreq;
-						view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch, a " + n.getNoteName());
-						break;
-					}
+
+		System.out.println("method call " + averagePitch );
+		double returnable = averagePitch;
+
+		double score = 0;
+		double currFreq = 0;
+		for(Note n: notes){
+
+			// go over the frequency
+			if(n.getFrequency() > returnable){
+				System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
+				//find out if its closer to freq above or below
+				if((returnable - currFreq) > (n.getFrequency() - returnable)){
+					System.out.println("got to upper"  + returnable + " " + n.getFrequency());
+					score = n.getFrequency() - returnable;
+					view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch, a " + n.getNoteName());
+					break;
 				}
-				currFreq = n.getFrequency();
+				else{
+					System.out.println("got to lower" + returnable + " " + currFreq);
+					score = returnable - currFreq;
+					view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch, a " + n.getNoteName());
+					break;
+				}
 			}
-			System.out.println("SCORE " + score );
-			
-			//view.setjp2ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
-				averagePitch = 0;
+			currFreq = n.getFrequency();
+		}
+		averagePitch = 0;
 
 	}
 	
 	
+	public void plot( ) {	
+				
+		JPlotPanel j = new JPlotPanel(pitches,currentNote.getFrequency());
+		j.setSize(600, 400);
+		j.setVisible(true);
+		JOptionPane.showConfirmDialog(null, j,"Results: ", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		
+	}
+
 	public void intervalPlayNoteAction() {
 		String range = view.getJjp3JComboBoxSelected();
 		String soundName = "";
@@ -286,11 +288,26 @@ public class AnalyzerController {
 	}
 
 	public void compareNoteId(String selected) {
+		Note userChoice = null;
+		
 		if(selected == currentNote.getNoteName()){
 			view.setjp4ResultsJTextArea("That's correct!");
 		}
 		else{
-			view.setjp4ResultsJTextArea("That's not right, try again.");
+			
+			for(Note n : notes){
+				if (n.getNoteName().equals(selected)) {
+					userChoice = n;
+				}
+			}
+			
+			if(userChoice.getFrequency() > currentNote.getFrequency()){
+				view.setjp4ResultsJTextArea("That's incorrect, it is lower than your choice.");
+			}
+			else{
+				view.setjp4ResultsJTextArea("That's incorrect, it is higher than your choice.");
+			}
+			
 		}
 	}
 
@@ -321,28 +338,24 @@ public class AnalyzerController {
 	public void PPstopAction() {
 		
 		double returnable = averagePitch;
+
 		double score = 0;
 		for(Note n: notes){
 			// go over the frequency
-			if(n.getFrequency() > returnable){
-				System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
-				//find out if its closer to freq above or below
-				if((returnable - currentNote.getFrequency()) > (n.getFrequency() - returnable)){
-					System.out.println("got to upper"  + returnable + " " + n.getFrequency());
-					score = n.getFrequency() - returnable;
-					view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
+			if(currentNote.getFrequency() < returnable){
+					score = returnable - currentNote.getFrequency();
+					view.setjp5ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
 					break;
 				}
 				else{
-					System.out.println("got to lower" + returnable + " " + currentNote.getFrequency());
-					score = returnable - currentNote.getFrequency();
-					view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
+					score = currentNote.getFrequency() - returnable;
+					view.setjp5ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
 					break;
 				}
-			}
 		}
+		
 		System.out.println("SCORE " + score );
-		view.setjp5ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
+		//view.setjp5ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
 		averagePitch = .0001;
 	}
 	

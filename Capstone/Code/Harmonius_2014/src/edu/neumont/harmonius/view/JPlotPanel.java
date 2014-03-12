@@ -1,6 +1,7 @@
 package edu.neumont.harmonius.view;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.LayoutManager;
@@ -10,12 +11,11 @@ import javax.swing.JPanel;
 
 public class JPlotPanel extends JPanel {
 
-	private static final long serialVersionUID = 1L;
 	Image img;
 	LayoutManager lytmgr;
 	int x,y,w,h;
 	ArrayList<Float> plotData;
-	private Float targetLine;
+	double targetLine;
 	
 	public JPlotPanel(Image img, int x, int y, int w, int h) {
 		super(true);
@@ -24,13 +24,16 @@ public class JPlotPanel extends JPanel {
 		this.y = y;
 		this.w = w;
 		this.h = h;	
+		this.setSize(400, 300);
 	}
 
-	public JPlotPanel(boolean isDoubleBuffered, ArrayList<Float> pitches, Float target) {
-		super(isDoubleBuffered);
+	public JPlotPanel(ArrayList<Float> pitches, double target) {
+		super();
 		plotData = pitches;
 		targetLine = target;
-		//repaint();
+		this.setSize(400, 300);
+		this.setPreferredSize(new Dimension(500, 500)); 
+		
 	}
 	
 	@Override
@@ -45,7 +48,10 @@ public class JPlotPanel extends JPanel {
 				int x = time;
 	            int y = (int)f.floatValue();
 	            g.setColor(Color.BLACK);
-	            g.fillOval(x, y, 8, 8);
+	            g.fillOval(x, y, 12, 12);
+	            g.setColor(Color.GREEN);
+	            g.fillRect(x, (int)targetLine, 8, 8);
+	            time+=10;
 			}
 		}
 	}
