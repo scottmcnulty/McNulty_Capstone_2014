@@ -4,16 +4,19 @@ package edu.neumont.harmonius.view;
 /*
  * Written by Scott McNulty
  * 
- * HandyJPanel - an easy way to paint 
+ * HandyJPanel - used to have a background image on the JPanel,
+ *    handles all the repainting 
  */
+
 import java.awt.Graphics;
-import java.awt.Graphics2D;
+//import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.LayoutManager;
 import javax.swing.JPanel;
 
 public class HandyJPanel extends JPanel {
 
+	private static final long serialVersionUID = 1L;
 	Image img;
 	LayoutManager lytmgr;
 	int x,y,w,h;
@@ -29,7 +32,6 @@ public class HandyJPanel extends JPanel {
 
 	public HandyJPanel(boolean isDoubleBuffered) {
 		super(isDoubleBuffered);
-		// TODO Auto-generated constructor stub
 	}
 	
 	@Override

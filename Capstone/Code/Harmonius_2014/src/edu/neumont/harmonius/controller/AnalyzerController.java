@@ -11,7 +11,6 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
-import javax.sound.sampled.Mixer.Info;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -23,139 +22,124 @@ import edu.neumont.harmonius.vendor.Yin;
 import edu.neumont.harmonius.vendor.Yin.DetectedPitchHandler;
 import edu.neumont.harmonius.view.ApplicationView;
 
+
 public class AnalyzerController {
 	
+	//constants for sampling, etc.
+	final double AUDIO_BUFFER_SIZE_IN_SECONDS = 0.1;
+	final int SAMPLE_RATE_IN_HZ = 22500;
+	final int PITCH_SAMPLES_PER_MINUTE = 2400;
+	final int MAX_PHRASE_LENGTH_IN_MINUTES = 5;  
+	final float HALF_STEP_CONSTANT = 1.05946F;
 	
 	// volatile because it runs on its own thread - volatile guarantees the most updated value
 	volatile AudioInputProcessor aiprocessor;
+	
 	// for processing files of notes
 	private String fileName = null;
+	
 	// can replace with other tonal scales with their notes and pitch values
 	private WesternScale ws = new WesternScale();
-	private ArrayList<Note> notes = ws.getNotes();
+	
+	public ArrayList<Note> notes = ws.getNotes();
 	private Random gen = new Random();
 	private Note currentNote;
-	private double[] pitchHistoryTotal = new double[6000];
-    double averagePitch;
-	int pitchCounter = 0;
-	Info microphone;
+	private int currentInterval;
+	private String[] intervals = {"Unison", "Minor Second", "Major Second", "Minor Third", "Major Third", "Perfect Fourth", "Diminished Fifth", "Perfect Fifth", "Minor Sixth", "Major Sixth", "Minor Seventh", "Major Seventh", "Perfect Octave"};
 	
-	public void setInputDevice(javax.sound.sampled.Mixer.Info target) {
-		this.microphone = target;
-	}
-
+    private ArrayList<Float> pitches = new ArrayList<Float>();
+	
+    double averagePitch = 0.0;
+	Mixer.Info microphone;
 	
 	class AudioInputProcessor implements Runnable {
 
-		private final int sampleRate;
-		private final double audioBufferSize;
+		private int sampleRate;
+		private double audioBufferSize;
 
 		public AudioInputProcessor() {
-			sampleRate = 22050; // Hz
-			audioBufferSize = 0.1;// Seconds
+			sampleRate = SAMPLE_RATE_IN_HZ; 
+			audioBufferSize = AUDIO_BUFFER_SIZE_IN_SECONDS;
 		}
 
 		public void run() {
-			javax.sound.sampled.Mixer.Info selected = (javax.sound.sampled.Mixer.Info) microphone; // mixer_selector.getSelectedItem();
+			Mixer.Info selected = (Mixer.Info) microphone;
 			if (selected == null)
 				return;
-			try {
+			try{
 				Mixer mixer = AudioSystem.getMixer(selected);
 				AudioFormat format = new AudioFormat(sampleRate, 16, 1, true,false);
 				DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, format);
-				/*Besides the class information inherited from its superclass, DataLine.Info provides additional information 
-				 * specific to data lines. This information includes
-				 *  -the audio formats supported by the data line
-				 *  -and the minimum and maximum sizes of its internal buffer
-				 */
 				TargetDataLine line = (TargetDataLine) mixer.getLine(dataLineInfo);
-				/*A target data line is a type of DataLine from which audio data can be read. The most common example is a data line that gets its 
-				 * data from an audio capture device. (The device is implemented as a mixer that writes to the target data line.)
-				 *Note that the naming convention for this interface reflects the relationship between the line and its mixer. From the perspective
-				 * of an application, a target data line may act as a source for audio data.
-				 * The target data line can be obtained from a mixer by invoking the getLine method of Mixer with an appropriate DataLine.Info object.
-				 */
 				int numberOfSamples = (int) (audioBufferSize * sampleRate);
-
 				line.open(format, numberOfSamples);
-
 				line.start();
-
 				AudioInputStream ais = new AudioInputStream(line);
 				if (fileName != null) {
 					ais = AudioSystem.getAudioInputStream(new File(fileName));
-
 				}
 				AudioFloatInputStream afis = AudioFloatInputStream.getInputStream(ais);
 				processAudio(afis);
 				line.close();
-			} catch (Exception e) {
+				//System.out.println("Line closed");
+				// destroy current audioprocessor
+				aiprocessor = null;
+				//System.out.println("aiprocessor destroyed");
+			} 
+			catch (Exception e) {
 				e.printStackTrace();
 			}
-
-			// destroy current audioprocessor
-			aiprocessor = null;
-
 		}
 
 		public void processAudio(AudioFloatInputStream afis)
 				throws IOException, UnsupportedAudioFileException {
 
 			Yin.processStream(afis, new DetectedPitchHandler() {
-
-				double[] pitchHistory = new double[6000]; // 600 is default value to get a pretty good visual line of pitch
-				int pitchHistoryPos = 0;
-
 				@Override
 				public void handleDetectedPitch(float time, float pitch) {
-
 					boolean noteDetected = pitch != -1;
-					double detectedNote = 69D + (12D * Math.log(pitch / 440D))/ Math.log(2D);
-					// noteDetected = noteDetected && Math.abs(detectedNote - Math.round(detectedNote)) > 0.3;
-
-					if (pitchHistoryPos == pitchHistory.length){
-						pitchHistoryPos = 0;
+					if(noteDetected){
+						pitches.add(pitch);
+						//System.out.println(pitch);
 					}
-					pitchHistoryTotal[pitchCounter] = pitch;
-					pitchCounter++;
-
-					// ternary for pitch_history as a regular array
-					pitchHistory[pitchHistoryPos] = noteDetected ? detectedNote: 0.0;
-
-					//int jj = pitchHistoryPos;
-					pitchHistoryPos++;
 				}
 			});
 
-			double pitchAccum = 1;
-			int pitchCount = 1;
-			
-			for (int i = 0; i < pitchHistoryTotal.length; i++) {
-
-				System.out.println(pitchHistoryTotal[i] + "\t");
-
-				if (pitchHistoryTotal[i] > 0) { // filter out zeros and -1 (no signal)
-
-					// filter to get rid of overtones
-					if (Math.abs(averagePitch - pitchHistoryTotal[i]) < 600) { // tighten up
-
-						pitchAccum += pitchHistoryTotal[i];
-						pitchCount++;
-					}
+			double pitchAccum  = 0;
+			int pitchCount = 0;
+		
+			for(Float f: pitches){
+				if(f.floatValue() < 0){
+					//no signal
+					
+				}	
+				else if(f.floatValue() > 0){
+					pitchAccum += f.floatValue();
+					pitchCount++;
 				}
-				averagePitch = pitchAccum / pitchCount;
+				else //beginning of blank space?
+				{
+					break; //found the end
+				}
+				
 			}
-			System.out.println("\n Average pitch = " + averagePitch);
 			
-			//clear it
-			for(int i = 0; i < pitchHistoryTotal.length; i++){pitchHistoryTotal[i] = 0;}
-			
+			averagePitch = pitchAccum / pitchCount;
+			System.out.print("\n Average pitch = " + averagePitch);
+			//plot(pitches,averagePitch);
+			pitches.clear();
 		}
 	}
+	
+	
+  /*private void plot(ArrayList<Float> pitches, double averagePitch) {
+		int selected = view.jtp.getSelectedIndex();
+		JPlotPanel plotJPanel  = new JPlotPanel(true, pitches, 200.0F);
+		view.jtp.getComponentAt(selected).add(plotJPanel);
+	}*/
 
 	private String getNote(float pitch) {
 		String note = "";
-
 		for (Note n : notes) {
 			if (pitch <= n.getFrequency() + 1.0
 					&& pitch > n.getFrequency() - 1.0) {
@@ -200,13 +184,13 @@ public class AnalyzerController {
 					if((returnable - currFreq) > (n.getFrequency() - returnable)){
 						System.out.println("got to upper"  + returnable + " " + n.getFrequency());
 						score = n.getFrequency() - returnable;
-						view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
+						view.setjp2ResultsJTextArea("You were " + score + "Hz high of your intended pitch, a " + n.getNoteName());
 						break;
 					}
 					else{
 						System.out.println("got to lower" + returnable + " " + currFreq);
 						score = returnable - currFreq;
-						view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
+						view.setjp2ResultsJTextArea("You were " + score + "Hz low of your intended pitch, a " + n.getNoteName());
 						break;
 					}
 				}
@@ -214,15 +198,14 @@ public class AnalyzerController {
 			}
 			System.out.println("SCORE " + score );
 			
-			view.setjp2ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
-				averagePitch = 1;
+			//view.setjp2ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
+				averagePitch = 0;
 
 	}
 	
 	
-	public void playNote() {
+	public void intervalPlayNoteAction() {
 		String range = view.getJjp3JComboBoxSelected();
-		System.out.println(range);
 		String soundName = "";
 		int randomNote = 0;
 		
@@ -230,100 +213,50 @@ public class AnalyzerController {
 
 		case "Soprano":
 			randomNote  = gen.nextInt(24)+20;
-			soundName = notes.get(randomNote).getSoundFile();    
-			try{
-				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
-				Clip clip = AudioSystem.getClip();
-				clip.open(audioInputStream);
-				clip.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}	
+			intervalAction(randomNote);
 			break;
 		case "Alto":
 			randomNote  = gen.nextInt(24)+13;
-			soundName = notes.get(randomNote).getSoundFile();    
-			try{
-				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
-				Clip clip = AudioSystem.getClip();
-				clip.open(audioInputStream);
-				clip.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}	
+			intervalAction(randomNote);
 		break;
 		case "Tenor":
-			
 			randomNote  = gen.nextInt(24)+8;
-				soundName = notes.get(randomNote).getSoundFile();    
-				try{
-					AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
-					Clip clip = AudioSystem.getClip();
-					clip.open(audioInputStream);
-					clip.start();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}	
+			intervalAction(randomNote);
 			break;
 		case "Bass":
 			randomNote  = gen.nextInt(24);
-			soundName = notes.get(randomNote).getSoundFile();    
-			try{
-				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
-				Clip clip = AudioSystem.getClip();
-				clip.open(audioInputStream);
-				clip.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}	
+			intervalAction(randomNote);
 		break;
 		}
 	}
+
+	private void intervalAction(int randomNote) {
+		String soundName;
+		soundName = notes.get(randomNote).getSoundFile();    
+		currentNote = notes.get(randomNote);
+		System.out.println("CurrentNote is: " + currentNote.getNoteName());
+		play(soundName);
+		currentInterval = gen.nextInt(13);
+		view.setjp3IntervalJLabel(intervals[currentInterval]);
+	}
+	
+	
 	
 	public void intervalTrainingStopAction(){
-		System.out.println("method call " + averagePitch );
-		double returnable = averagePitch;
 		
-		double score = 0;
-		double currFreq = 0;
-		for(Note n: notes){
-			
-			// go over the frequency
-			if(n.getFrequency() > returnable){
-				System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
-				//find out if its closer to freq above or below
-				if((returnable - currFreq) > (n.getFrequency() - returnable)){
-					System.out.println("got to upper"  + returnable + " " + n.getFrequency());
-					score = n.getFrequency() - returnable;
-					view.setjp3ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
-					break;
-				}
-				else{
-					System.out.println("got to lower" + returnable + " " + currFreq);
-					score = returnable - currFreq;
-					view.setjp3ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
-					break;
-				}
-			}
-			currFreq = n.getFrequency();
+		double correctPitch = currentNote.getFrequency() * (Math.pow(1.05946, currentInterval));
+		System.out.println("CurrentNote: " + currentNote.getFrequency() + " Correct Pitch to sing: " + correctPitch);
+		double score = Math.abs(correctPitch - averagePitch);
+		if(averagePitch > correctPitch){
+			view.setjp3ResultsJTextArea("You were " + score + "Hz high of your intended pitch.");
 		}
-		System.out.println("SCORE " + score );
+		else{
+			view.setjp3ResultsJTextArea("You were " + score + "Hz low of your intended pitch.");
+		}
+		averagePitch = 0;
 		
-		//view.setjp3ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
-			averagePitch = 1;
-
 	}
-	
 
-	public ApplicationView view; 
-	
-	public void getView(ApplicationView v){
-		view = v;
-	}
-	
-	public AnalyzerController(Model model) {
-
-	}
 
 	public String[] getNoteNameList() {
 		
@@ -365,42 +298,31 @@ public class AnalyzerController {
 		
 		String range = view.getJp5RangeJComboBoxSelected();
 		System.out.println(range);
-		
-		
 		int randomNote = 0;
-		
 		switch(range){
-
 		case "Soprano":
 			randomNote  = gen.nextInt(24)+20;
-			
 			break;
 		case "Alto":
 			randomNote  = gen.nextInt(24)+13;
-		
 		break;
 		case "Tenor":
-			
 			randomNote  = gen.nextInt(24)+8;
-		
 			break;
 		case "Bass":
 			randomNote  = gen.nextInt(24);
-			
 		break;
 		}
 		currentNote = notes.get(randomNote);
 		view.setjp5NoteDisplayJLabel(currentNote.getNoteName());
 	}
 
+	
 	public void PPstopAction() {
-		System.out.println("method call " + averagePitch );
+		
 		double returnable = averagePitch;
-		
 		double score = 0;
-		
 		for(Note n: notes){
-			
 			// go over the frequency
 			if(n.getFrequency() > returnable){
 				System.out.println("got to chooser" + n.getFrequency() + " " + returnable);
@@ -420,9 +342,40 @@ public class AnalyzerController {
 			}
 		}
 		System.out.println("SCORE " + score );
-		
 		view.setjp5ResultsJTextArea("You were " + score + "Hz off of your intended pitch.");
-			averagePitch = 1;
-		
+		averagePitch = .0001;
+	}
+	
+	public ApplicationView view; 
+	
+	public void getView(ApplicationView v){
+		view = v;
+	}
+	
+	public AnalyzerController(Model model) {
+
+	}
+
+	public void setFilename(String string) {
+		fileName = string;
+	}
+	
+	public void nullifyAIProcessor(){
+		aiprocessor = null;
+	}
+	
+	public void setInputDevice(Mixer.Info input) {
+		this.microphone = input;
+	}
+	
+	private void play(String file){
+		try{
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(file).getAbsoluteFile());
+			Clip clip = AudioSystem.getClip();
+			clip.open(audioInputStream);
+			clip.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
 	}
 }
